@@ -286,24 +286,19 @@ main(int argc, char **argv) {
 		if ( (locks[screen] = lockscreen(dpy, screen)) != NULL)
 			nlocks++;
 	}
-	XSync(dpy, False);
 
 	/* Did we actually manage to lock something? */
-	if (nlocks == 0) { // nothing to protect
-		free(locks);
-		XCloseDisplay(dpy);
-		return 1;
+	if (nlocks) {
+		XSync(dpy, False);
+		/* Everything is blank, wait for the correct password. */
+		readpw(dpy, pws);
+
+		/* Password ok, unlock everything and quit. */
+		for(screen = 0; screen < nscreens; screen++)
+			unlockscreen(dpy, locks[screen]);
 	}
-
-	/* Everything is now blank. Now wait for the correct password. */
-	readpw(dpy, pws);
-
-	/* Password ok, unlock everything and quit. */
-	for(screen = 0; screen < nscreens; screen++)
-		unlockscreen(dpy, locks[screen]);
 
 	free(locks);
 	XCloseDisplay(dpy);
-
-	return 0;
+	return !nlocks;
 }
