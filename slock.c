@@ -202,7 +202,7 @@ lockscreen(Display *dpy, int screen) {
 	if(dpy == NULL || screen < 0)
 		return NULL;
 
-	lock = malloc(sizeof(Lock));
+	lock = malloc(*lock);
 	if(lock == NULL)
 		return NULL;
 
@@ -278,7 +278,7 @@ main(int argc, char **argv) {
 		die("slock: cannot open display\n");
 	/* Get the number of screens in display "dpy" and blank them all. */
 	nscreens = ScreenCount(dpy);
-	locks = malloc(sizeof(Lock *) * nscreens);
+	locks = malloc(sizeof *locks * nscreens);
 	if(locks == NULL)
 		die("slock: malloc: %s\n", strerror(errno));
 
