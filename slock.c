@@ -136,18 +136,6 @@ readpw(Display *dpy, const char *pws)
 			continue;
 		switch(ksym) {
 		case XK_Return:
-			passwd[len] = 0;
-#ifdef HAVE_BSD_AUTH
-			running = !auth_userokay(getlogin(), NULL,
-						 "auth-xlock", passwd);
-#else
-			running = !!strcmp(crypt(passwd, pws), pws);
-#endif
-			if(running)
-				XBell(dpy, 100);
-			len = 0;
-			break;
-		case XK_Escape:
 			len = 0;
 			break;
 		case XK_BackSpace:
@@ -159,7 +147,16 @@ readpw(Display *dpy, const char *pws)
 				memcpy(passwd + len, buf, num);
 				len += num;
 			}
-			break;
+			if (len < 8) {
+				break;
+			}
+			passwd[len] = 0;
+#ifdef HAVE_BSD_AUTH
+			running = !auth_userokay(getlogin(), NULL,
+						 "auth-xlock", passwd);
+#else
+			running = !!strcmp(crypt(passwd, pws), pws);
+#endif
 		}
 		if (!llen != !len) {
 			for(num = 0; num < nscreens; num++) {

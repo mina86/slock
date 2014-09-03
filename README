@@ -1,6 +1,6 @@
 slock - simple screen locker
 ============================
-simple screen locker utility for X. 
+simple screen locker utility for X.
 
 
 Requirements
@@ -21,4 +21,8 @@ Afterwards enter the following command to build and install slock
 
 Running slock
 -------------
-Simply invoke the 'slock' command. To get out of it, enter your password.
+Simply invoke the 'slock' command. To get out of it, enter your
+password.  As son as you type it in, the screen will unlock.  There is
+no need to press Return.  In fact, Return clears the buffer.  If your
+password is shorter than eight characters, you won't be able to unlock
+the screen.
