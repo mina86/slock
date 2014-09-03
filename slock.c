@@ -115,61 +115,66 @@ readpw(Display *dpy, const char *pws)
 	 * had been removed and you can set it with "xset" or some other
 	 * utility. This way the user can easily set a customized DPMS
 	 * timeout. */
-	while(running && !XNextEvent(dpy, &ev)) {
-		if(ev.type == KeyPress) {
-			buf[0] = 0;
-			num = XLookupString(&ev.xkey, buf, sizeof buf, &ksym, 0);
-			if(IsKeypadKey(ksym)) {
-				if(ksym == XK_KP_Enter)
-					ksym = XK_Return;
-				else if(ksym >= XK_KP_0 && ksym <= XK_KP_9)
-					ksym = (ksym - XK_KP_0) + XK_0;
-			}
-			if(IsFunctionKey(ksym) || IsKeypadKey(ksym)
-					|| IsMiscFunctionKey(ksym) || IsPFKey(ksym)
-					|| IsPrivateKeypadKey(ksym))
-				continue;
-			switch(ksym) {
-			case XK_Return:
-				passwd[len] = 0;
-#ifdef HAVE_BSD_AUTH
-				running = !auth_userokay(getlogin(), NULL, "auth-xlock", passwd);
-#else
-				running = !!strcmp(crypt(passwd, pws), pws);
-#endif
-				if(running)
-					XBell(dpy, 100);
-				len = 0;
-				break;
-			case XK_Escape:
-				len = 0;
-				break;
-			case XK_BackSpace:
-				if(len)
-					--len;
-				break;
-			default:
-				if(num && !iscntrl((int) buf[0]) && (len + num < sizeof passwd)) {
-					memcpy(passwd + len, buf, num);
-					len += num;
-				}
-				break;
-			}
-			if(llen == 0 && len != 0) {
-				for(screen = 0; screen < nscreens; screen++) {
-					XSetWindowBackground(dpy, locks[screen]->win, locks[screen]->colors[1]);
-					XClearWindow(dpy, locks[screen]->win);
-				}
-			} else if(llen != 0 && len == 0) {
-				for(screen = 0; screen < nscreens; screen++) {
-					XSetWindowBackground(dpy, locks[screen]->win, locks[screen]->colors[0]);
-					XClearWindow(dpy, locks[screen]->win);
-				}
-			}
-			llen = len;
+	while (running && !XNextEvent(dpy, &ev)) {
+		if (ev.type != KeyPress) {
+			for(screen = 0; screen < nscreens; screen++)
+				XRaiseWindow(dpy, locks[screen]->win);
+			continue;
 		}
-		else for(screen = 0; screen < nscreens; screen++)
-			XRaiseWindow(dpy, locks[screen]->win);
+
+		buf[0] = 0;
+		num = XLookupString(&ev.xkey, buf, sizeof buf, &ksym, 0);
+		if(IsKeypadKey(ksym)) {
+			if(ksym == XK_KP_Enter)
+				ksym = XK_Return;
+			else if(ksym >= XK_KP_0 && ksym <= XK_KP_9)
+				ksym = (ksym - XK_KP_0) + XK_0;
+		}
+		if(IsFunctionKey(ksym) || IsKeypadKey(ksym)
+		   || IsMiscFunctionKey(ksym) || IsPFKey(ksym)
+		   || IsPrivateKeypadKey(ksym))
+			continue;
+		switch(ksym) {
+		case XK_Return:
+			passwd[len] = 0;
+#ifdef HAVE_BSD_AUTH
+			running = !auth_userokay(getlogin(), NULL,
+						 "auth-xlock", passwd);
+#else
+			running = !!strcmp(crypt(passwd, pws), pws);
+#endif
+			if(running)
+				XBell(dpy, 100);
+			len = 0;
+			break;
+		case XK_Escape:
+			len = 0;
+			break;
+		case XK_BackSpace:
+			if(len)
+				--len;
+			break;
+		default:
+			if(num && !iscntrl((int) buf[0]) && (len + num < sizeof passwd)) {
+				memcpy(passwd + len, buf, num);
+				len += num;
+			}
+			break;
+		}
+		if(llen == 0 && len != 0) {
+			for(screen = 0; screen < nscreens; screen++) {
+				XSetWindowBackground(dpy, locks[screen]->win,
+						     locks[screen]->colors[1]);
+				XClearWindow(dpy, locks[screen]->win);
+			}
+		} else if(llen != 0 && len == 0) {
+			for(screen = 0; screen < nscreens; screen++) {
+				XSetWindowBackground(dpy, locks[screen]->win,
+						     locks[screen]->colors[0]);
+				XClearWindow(dpy, locks[screen]->win);
+			}
+		}
+		llen = len;
 	}
 }
 
