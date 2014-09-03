@@ -258,9 +258,9 @@ usage(void) {
 
 int
 main(int argc, char **argv) {
+	int screen, nlocks = 0;
 	const char *pws;
 	Display *dpy;
-	int screen;
 
 	if((argc == 2) && !strcmp("-v", argv[1]))
 		die("slock-%s, © 2006-2012 Anselm R Garbe\n", VERSION);
@@ -281,7 +281,7 @@ main(int argc, char **argv) {
 	locks = malloc(sizeof(Lock *) * nscreens);
 	if(locks == NULL)
 		die("slock: malloc: %s\n", strerror(errno));
-	int nlocks = 0;
+
 	for(screen = 0; screen < nscreens; screen++) {
 		if ( (locks[screen] = lockscreen(dpy, screen)) != NULL)
 			nlocks++;
