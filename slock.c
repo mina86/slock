@@ -103,7 +103,7 @@ readpw(Display *dpy, const char *pws)
 #endif
 {
 	char buf[32], passwd[256];
-	int num, screen;
+	int num;
 	unsigned int len, llen;
 	KeySym ksym;
 	XEvent ev;
@@ -117,8 +117,8 @@ readpw(Display *dpy, const char *pws)
 	 * timeout. */
 	while (running && !XNextEvent(dpy, &ev)) {
 		if (ev.type != KeyPress) {
-			for(screen = 0; screen < nscreens; screen++)
-				XRaiseWindow(dpy, locks[screen]->win);
+			for (num = 0; num < nscreens; num++)
+				XRaiseWindow(dpy, locks[num]->win);
 			continue;
 		}
 
@@ -162,16 +162,16 @@ readpw(Display *dpy, const char *pws)
 			break;
 		}
 		if(llen == 0 && len != 0) {
-			for(screen = 0; screen < nscreens; screen++) {
-				XSetWindowBackground(dpy, locks[screen]->win,
-						     locks[screen]->colors[1]);
-				XClearWindow(dpy, locks[screen]->win);
+			for(num = 0; num < nscreens; num++) {
+				XSetWindowBackground(dpy, locks[num]->win,
+						     locks[num]->colors[1]);
+				XClearWindow(dpy, locks[num]->win);
 			}
 		} else if(llen != 0 && len == 0) {
-			for(screen = 0; screen < nscreens; screen++) {
-				XSetWindowBackground(dpy, locks[screen]->win,
-						     locks[screen]->colors[0]);
-				XClearWindow(dpy, locks[screen]->win);
+			for(num = 0; num < nscreens; num++) {
+				XSetWindowBackground(dpy, locks[num]->win,
+						     locks[num]->colors[0]);
+				XClearWindow(dpy, locks[num]->win);
 			}
 		}
 		llen = len;
