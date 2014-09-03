@@ -47,8 +47,7 @@ die(const char *errstr, ...) {
 #ifdef __linux__
 #include <fcntl.h>
 
-static void
-dontkillme(void) {
+static void dontkillme(void) {
 	int fd;
 
 	fd = open("/proc/self/oom_score_adj", O_WRONLY);
@@ -57,11 +56,26 @@ dontkillme(void) {
 	if (fd < 0 || write(fd, "-1000\n", 6) != 6 || close(fd) != 0)
 		die("cannot disable the out-of-memory killer for this process\n");
 }
+
+#else
+
+static void dontkillme(void) {}
+
 #endif
 
-#ifndef HAVE_BSD_AUTH
-static const char *
-getpw(void) { /* only run as root */
+#ifdef HAVE_BSD_AUTH
+
+static const char *getpw(void) {
+	return 0;
+}
+
+static int checkpw(const char *passwd, const char *pws) {
+	return auth_userokay(getlogin(), NULL, "auth-xlock", passwd);
+}
+
+#else
+
+static const char *getpw(void) { /* only run as root */
 	const char *rval;
 	struct passwd *pw;
 
@@ -93,15 +107,14 @@ getpw(void) { /* only run as root */
 		die("slock: cannot drop privileges\n");
 	return rval;
 }
+
+static int checkpw(const char *passwd, const char *pws) {
+	return !strcmp(crypt(passwd, pws), pws);
+}
+
 #endif
 
-static void
-#ifdef HAVE_BSD_AUTH
-readpw(Display *dpy)
-#else
-readpw(Display *dpy, const char *pws)
-#endif
-{
+static void readpw(Display *dpy, const char *pws) {
 	char buf[32], passwd[256];
 	int num;
 	unsigned int len, llen;
@@ -151,12 +164,7 @@ readpw(Display *dpy, const char *pws)
 				break;
 			}
 			passwd[len] = 0;
-#ifdef HAVE_BSD_AUTH
-			running = !auth_userokay(getlogin(), NULL,
-						 "auth-xlock", passwd);
-#else
-			running = !!strcmp(crypt(passwd, pws), pws);
-#endif
+			running = !checkpw(passwd, pws);
 		}
 		if (!llen != !len) {
 			for(num = 0; num < nscreens; num++) {
@@ -250,9 +258,7 @@ usage(void) {
 
 int
 main(int argc, char **argv) {
-#ifndef HAVE_BSD_AUTH
 	const char *pws;
-#endif
 	Display *dpy;
 	int screen;
 
@@ -261,16 +267,12 @@ main(int argc, char **argv) {
 	else if(argc != 1)
 		usage();
 
-#ifdef __linux__
 	dontkillme();
-#endif
 
 	if(!getpwuid(getuid()))
 		die("slock: no passwd entry for you\n");
 
-#ifndef HAVE_BSD_AUTH
 	pws = getpw();
-#endif
 
 	if(!(dpy = XOpenDisplay(0)))
 		die("slock: cannot open display\n");
@@ -294,11 +296,7 @@ main(int argc, char **argv) {
 	}
 
 	/* Everything is now blank. Now wait for the correct password. */
-#ifdef HAVE_BSD_AUTH
-	readpw(dpy);
-#else
 	readpw(dpy, pws);
-#endif
 
 	/* Password ok, unlock everything and quit. */
 	for(screen = 0; screen < nscreens; screen++)
