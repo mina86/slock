@@ -161,16 +161,10 @@ readpw(Display *dpy, const char *pws)
 			}
 			break;
 		}
-		if(llen == 0 && len != 0) {
+		if (!llen != !len) {
 			for(num = 0; num < nscreens; num++) {
 				XSetWindowBackground(dpy, locks[num]->win,
-						     locks[num]->colors[1]);
-				XClearWindow(dpy, locks[num]->win);
-			}
-		} else if(llen != 0 && len == 0) {
-			for(num = 0; num < nscreens; num++) {
-				XSetWindowBackground(dpy, locks[num]->win,
-						     locks[num]->colors[0]);
+						     locks[num]->colors[!llen]);
 				XClearWindow(dpy, locks[num]->win);
 			}
 		}
